@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Кто я из мира Гарри Поттера?</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --gold-dark: #8a6a1f;
+    --parchment: #f5ead6;
+    --parchment-dark: #e8d4b0;
+    --ink: #1a0f00;
+    --ink-mid: #3d2b10;
+    --ink-light: #6b4c22;
+    --crimson: #8b1a1a;
+    --crimson-light: #c0392b;
+    --shadow: rgba(0,0,0,0.5);
+    --bg-dark: #0d0800;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Crimson Text', serif;
+    background: var(--bg-dark);
+    color: var(--parchment);
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* Звёздный фон */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse at 20% 20%, rgba(201,168,76,0.07) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(139,26,26,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(13,8,0,1) 0%, rgba(26,15,0,1) 100%);
+    z-index: 0;
+  }
+
+  .stars {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .star {
+    position: absolute;
+    background: var(--gold-light);
+    border-radius: 50%;
+    animation: twinkle var(--dur, 3s) ease-in-out infinite var(--delay, 0s);
+    opacity: 0;
+  }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 0; }
+    50% { opacity: var(--max-op, 0.6); }
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  /* ========== ШАПКА ========== */
+  .header {
+    text-align: center;
+    padding: 24px 0 20px;
+  }
+
+  .header-crest {
+    font-size: 32px;
+    margin-bottom: 8px;
+    filter: drop-shadow(0 0 12px rgba(201,168,76,0.5));
+  }
+
+  .header h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-shadow: 0 0 20px rgba(201,168,76,0.4);
+    line-height: 1.3;
+  }
+
+  .header-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 12px 0 0;
+  }
+
+  .header-divider::before,
+  .header-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-dark), transparent);
+  }
+
+  .header-divider span {
+    color: var(--gold-dark);
+    font-size: 16px;
+  }
+
+  /* ========== ЭКРАНЫ ========== */
+  .screen { display: none; animation: fadeIn 0.4s ease; }
+  .screen.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ========== КАРТОЧКИ/СЕКЦИИ ========== */
+  .card {
+    background: linear-gradient(135deg, rgba(245,234,214,0.06) 0%, rgba(201,168,76,0.04) 100%);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 16px;
+    position: relative;
+    backdrop-filter: blur(4px);
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 4px;
+    background: linear-gradient(135deg, rgba(201,168,76,0.05), transparent);
+    pointer-events: none;
+  }
+
+  .card-title {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold-dark);
+    margin-bottom: 14px;
+  }
+
+  /* ========== КНОПКИ ========== */
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 14px 20px;
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold) 50%, var(--gold-dark) 100%);
+    color: var(--ink);
+    box-shadow: 0 4px 20px rgba(201,168,76,0.25), inset 0 1px 0 rgba(255,255,255,0.15);
+  }
+
+  .btn-primary:active { transform: scale(0.98); }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--gold);
+    border: 1px solid rgba(201,168,76,0.4);
+  }
+
+  .btn-secondary:active { background: rgba(201,168,76,0.08); }
+
+  .btn-danger {
+    background: linear-gradient(135deg, #5a0f0f 0%, var(--crimson) 100%);
+    color: var(--parchment);
+    box-shadow: 0 4px 20px rgba(139,26,26,0.3);
+  }
+
+  .btn-success {
+    background: linear-gradient(135deg, #1a4a1a 0%, #2d7a2d 100%);
+    color: #a8e6a8;
+    box-shadow: 0 4px 20px rgba(45,122,45,0.3);
+    font-size: 15px;
+    padding: 18px 20px;
+  }
+
+  .btn + .btn { margin-top: 10px; }
+
+  /* ========== ИНПУТЫ ========== */
+  .input-group {
+    margin-bottom: 14px;
+  }
+
+  .input-group label {
+    display: block;
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold-dark);
+    margin-bottom: 6px;
+  }
+
+  input[type="text"], input[type="number"], textarea, select {
+    width: 100%;
+    background: rgba(245,234,214,0.05);
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 3px;
+    padding: 12px 14px;
+    color: var(--parchment);
+    font-family: 'Crimson Text', serif;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--gold);
+    background: rgba(245,234,214,0.08);
+  }
+
+  input::placeholder, textarea::placeholder {
+    color: rgba(245,234,214,0.25);
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+    line-height: 1.5;
+  }
+
+  select option { background: #1a0f00; }
+
+  /* ========== ЛОББИ ========== */
+  .room-code {
+    text-align: center;
+    padding: 20px;
+  }
+
+  .room-code-label {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold-dark);
+    margin-bottom: 8px;
+  }
+
+  .room-code-value {
+    font-family: 'Cinzel', serif;
+    font-size: 42px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 10px;
+    text-shadow: 0 0 30px rgba(201,168,76,0.5);
+  }
+
+  .qr-hint {
+    font-size: 13px;
+    color: rgba(245,234,214,0.5);
+    margin-top: 8px;
+    font-style: italic;
+  }
+
+  .players-list {
+    list-style: none;
+  }
+
+  .player-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .player-item:last-child { border-bottom: none; }
+
+  .player-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold-dark), var(--ink-mid));
+    border: 1px solid rgba(201,168,76,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gold-light);
+    flex-shrink: 0;
+  }
+
+  .player-name-text {
+    font-size: 17px;
+    color: var(--parchment);
+    flex: 1;
+  }
+
+  .player-host-badge {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--gold);
+    background: rgba(201,168,76,0.1);
+    border: 1px solid rgba(201,168,76,0.3);
+    padding: 2px 6px;
+    border-radius: 2px;
+  }
+
+  .player-waiting {
+    font-size: 12px;
+    color: rgba(245,234,214,0.3);
+    font-style: italic;
+  }
+
+  /* ========== ИГРОВОЙ ЭКРАН ========== */
+  .other-players {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .other-player-card {
+    background: linear-gradient(135deg, rgba(245,234,214,0.05), rgba(201,168,76,0.03));
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .other-player-card.guessed {
+    opacity: 0.5;
+    border-color: rgba(45,122,45,0.4);
+  }
+
+  .opc-header {
+    padding: 6px 8px;
+    background: rgba(201,168,76,0.08);
+    border-bottom: 1px solid rgba(201,168,76,0.15);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .opc-name {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--gold-light);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 80px;
+  }
+
+  .opc-score {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    color: var(--gold);
+    font-weight: 600;
+  }
+
+  .opc-img-wrap {
+    aspect-ratio: 3/4;
+    background: rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .opc-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .opc-img-placeholder {
+    font-size: 36px;
+    opacity: 0.3;
+  }
+
+  .opc-character {
+    padding: 6px 8px;
+    font-size: 11px;
+    color: rgba(245,234,214,0.6);
+    font-style: italic;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .guessed-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(45,122,45,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+  }
+
+  /* Моя секция */
+  .my-section {
+    background: linear-gradient(135deg, rgba(201,168,76,0.08), rgba(139,26,26,0.05));
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 4px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .my-section-title {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold-dark);
+    margin-bottom: 12px;
+  }
+
+  .score-display {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .score-number {
+    font-family: 'Cinzel', serif;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--gold);
+    line-height: 1;
+    text-shadow: 0 0 20px rgba(201,168,76,0.4);
+  }
+
+  .score-label {
+    font-size: 14px;
+    color: rgba(245,234,214,0.5);
+    font-style: italic;
+  }
+
+  .notes-area {
+    margin-top: 10px;
+  }
+
+  .notes-area label {
+    display: block;
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold-dark);
+    margin-bottom: 6px;
+  }
+
+  /* ========== ФИНАЛЬНЫЙ ЭКРАН ========== */
+  .podium {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .podium-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: rgba(245,234,214,0.04);
+    border: 1px solid rgba(201,168,76,0.15);
+    border-radius: 4px;
+  }
+
+  .podium-rank {
+    font-family: 'Cinzel', serif;
+    font-size: 20px;
+    font-weight: 700;
+    width: 32px;
+    text-align: center;
+  }
+
+  .podium-rank.rank-1 { color: #FFD700; }
+  .podium-rank.rank-2 { color: #C0C0C0; }
+  .podium-rank.rank-3 { color: #CD7F32; }
+  .podium-rank.rank-other { color: rgba(245,234,214,0.4); font-size: 14px; }
+
+  .podium-info { flex: 1; }
+  .podium-player { font-size: 17px; color: var(--parchment); }
+  .podium-pts {
+    font-family: 'Cinzel', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--gold);
+  }
+
+  /* ========== СТАТУС ========== */
+  .status-bar {
+    text-align: center;
+    padding: 8px;
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold-dark);
+    margin-bottom: 12px;
+  }
+
+  .status-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+    margin-right: 6px;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* ========== УТИЛИТЫ ========== */
+  .text-center { text-align: center; }
+  .mt-8 { margin-top: 8px; }
+  .mt-16 { margin-top: 16px; }
+
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(201,168,76,0.95);
+    color: var(--ink);
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 1px;
+    padding: 12px 20px;
+    border-radius: 3px;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .loading {
+    text-align: center;
+    padding: 40px 20px;
+  }
+
+  .loading-icon {
+    font-size: 40px;
+    animation: spin 2s linear infinite;
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .loading-text {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: var(--gold-dark);
+  }
+
+  .error-msg {
+    background: rgba(139,26,26,0.2);
+    border: 1px solid rgba(139,26,26,0.4);
+    border-radius: 3px;
+    padding: 12px;
+    font-size: 14px;
+    color: #f08080;
+    margin-bottom: 12px;
+    display: none;
+  }
+
+  /* Мигание при новой карточке */
+  @keyframes flashNew {
+    0% { box-shadow: 0 0 0 0 rgba(201,168,76,0.6); }
+    70% { box-shadow: 0 0 0 15px rgba(201,168,76,0); }
+    100% { box-shadow: 0 0 0 0 rgba(201,168,76,0); }
+  }
+
+  .flash-new {
+    animation: flashNew 0.6s ease-out;
+  }
+
+  /* Конфетти-звёзды при угадывании */
+  .confetti-star {
+    position: fixed;
+    pointer-events: none;
+    font-size: 20px;
+    z-index: 999;
+    animation: confettiFall 1.5s ease-in forwards;
+  }
+
+  @keyframes confettiFall {
+    0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Звёзды -->
+<div class="stars" id="stars"></div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<div class="container">
+
+  <div class="header">
+    <div class="header-crest">⚡</div>
+    <h1>Кто я из мира<br>Гарри Поттера?</h1>
+    <div class="header-divider"><span>✦</span></div>
+  </div>
+
+  <!-- ======== ЭКРАН: НАСТРОЙКА FIREBASE ======== -->
+  <div class="screen active" id="screen-config">
+    <div class="card">
+      <div class="card-title">⚙ Настройка Firebase</div>
+      <p style="font-size:14px; color: rgba(245,234,214,0.6); margin-bottom:16px; line-height:1.6;">
+        Для синхронизации нужен Firebase. Вставьте конфигурацию из вашего проекта.
+      </p>
+
+      <div class="input-group">
+        <label>API Key</label>
+        <input type="text" id="fb-apiKey" placeholder="AIzaSy...">
+      </div>
+      <div class="input-group">
+        <label>Database URL</label>
+        <input type="text" id="fb-dbUrl" placeholder="https://your-project-default-rtdb.firebaseio.com">
+      </div>
+      <div class="input-group">
+        <label>Project ID</label>
+        <input type="text" id="fb-projectId" placeholder="your-project-id">
+      </div>
+      <div class="input-group">
+        <label>App ID</label>
+        <input type="text" id="fb-appId" placeholder="1:123456:web:abc...">
+      </div>
+
+      <div class="error-msg" id="config-error"></div>
+
+      <button class="btn btn-primary" onclick="initFirebase()">Подключиться ✦</button>
+      <button class="btn btn-secondary mt-8" onclick="showHowTo()">Как получить конфигурацию?</button>
+    </div>
+
+    <div id="howto-block" style="display:none">
+      <div class="card">
+        <div class="card-title">📜 Инструкция</div>
+        <ol style="font-size:14px; color:rgba(245,234,214,0.7); line-height:2; padding-left:18px;">
+          <li>Откройте <strong style="color:var(--gold)">console.firebase.google.com</strong></li>
+          <li>Создайте проект (бесплатно)</li>
+          <li>Добавьте Web-приложение (&lt;/&gt;)</li>
+          <li>Скопируйте конфигурацию</li>
+          <li>Перейдите в <strong style="color:var(--gold)">Realtime Database</strong> → Создать базу → Тестовый режим</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======== ЭКРАН: МЕНЮ ======== -->
+  <div class="screen" id="screen-menu">
+    <div class="card">
+      <div class="card-title">✦ Ваше имя</div>
+      <div class="input-group">
+        <input type="text" id="player-name" placeholder="Введите имя..." maxlength="20">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🖼 Картинки персонажей</div>
+      <p style="font-size:13px; color:rgba(245,234,214,0.6); margin-bottom:12px; line-height:1.6;">
+        Папка Google Drive с картинками. Файлы: 001.png, 002.png... до <strong id="char-count-display" style="color:var(--gold)">120</strong>.png
+      </p>
+      <div class="input-group">
+        <label>Базовый URL картинок</label>
+        <input type="text" id="images-url" placeholder="https://drive.google.com/uc?id=FOLDER_ID&export=view&...">
+      </div>
+      <div class="input-group">
+        <label>Количество персонажей</label>
+        <input type="number" id="char-count" value="120" min="1" max="500" onchange="document.getElementById('char-count-display').textContent=this.value">
+      </div>
+      <p style="font-size:12px; color:rgba(245,234,214,0.4); font-style:italic; line-height:1.6;">
+        💡 Папка должна быть открыта для всех. Формат URL смотрите в инструкции ниже.
+      </p>
+      <button class="btn btn-secondary mt-8" onclick="showImgHelp()">Как настроить Google Drive?</button>
+      <div id="img-help" style="display:none; margin-top:12px; font-size:13px; color:rgba(245,234,214,0.6); line-height:1.8; border-top:1px solid rgba(201,168,76,0.1); padding-top:12px;">
+        <strong style="color:var(--gold)">Вариант 1 — прямые ссылки:</strong><br>
+        Загрузите картинки в Firebase Storage или любой хостинг.<br>
+        URL будет вида: <code style="color:var(--gold-light); font-size:11px;">https://example.com/cards/</code><br>
+        Файлы: 001.png, 002.png и т.д.<br><br>
+        <strong style="color:var(--gold)">Вариант 2 — Google Drive:</strong><br>
+        1. Загрузите файлы с именами 001.png...120.png в папку<br>
+        2. Откройте общий доступ к папке → Все у кого есть ссылка<br>
+        3. Для каждого файла скопируйте ID из ссылки<br>
+        4. URL = <code style="color:var(--gold-light); font-size:11px;">https://drive.google.com/uc?export=view&id=FILE_ID</code><br><br>
+        <em>⚠️ Google Drive неудобен для 120 файлов. Рекомендуем Firebase Storage — там можно задать базовый URL и подставлять 001.png, 002.png автоматически.</em>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="createRoom()">Создать игру ✦</button>
+    <div style="margin: 16px 0; text-align:center; font-size:13px; color:rgba(245,234,214,0.3);">— или —</div>
+    <div class="input-group">
+      <label>Код комнаты</label>
+      <input type="text" id="join-code" placeholder="XXXX" maxlength="4" style="text-align:center; font-family:'Cinzel',serif; font-size:24px; letter-spacing:8px; text-transform:uppercase">
+    </div>
+    <button class="btn btn-secondary" onclick="joinRoom()">Войти в игру</button>
+  </div>
+
+  <!-- ======== ЭКРАН: ЛОББИ ======== -->
+  <div class="screen" id="screen-lobby">
+    <div class="card room-code">
+      <div class="room-code-label">Код комнаты</div>
+      <div class="room-code-value" id="lobby-code">----</div>
+      <div class="qr-hint">Покажите этот код другим игрокам</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🧙 Игроки <span id="player-count-lobby">(0)</span></div>
+      <ul class="players-list" id="lobby-players"></ul>
+    </div>
+
+    <div id="host-controls" style="display:none">
+      <button class="btn btn-primary" id="start-btn" onclick="startGame()" disabled>
+        Начать игру ✦
+      </button>
+      <p style="text-align:center; font-size:12px; color:rgba(245,234,214,0.3); margin-top:8px; font-style:italic;">
+        Нужно минимум 2 игрока
+      </p>
+    </div>
+
+    <button class="btn btn-secondary mt-8" onclick="leaveRoom()">Покинуть комнату</button>
+  </div>
+
+  <!-- ======== ЭКРАН: ИГРА ======== -->
+  <div class="screen" id="screen-game">
+    <div class="status-bar">
+      <span class="status-dot"></span>
+      <span id="game-status-text">Игра идёт</span>
+    </div>
+
+    <!-- Карточки других игроков -->
+    <div class="other-players" id="other-players-grid"></div>
+
+    <!-- Моя секция -->
+    <div class="my-section">
+      <div class="my-section-title">✦ Ваша игра</div>
+      <div class="score-display">
+        <div class="score-number" id="my-score">0</div>
+        <div class="score-label">угаданных персонажей</div>
+      </div>
+
+      <button class="btn btn-success" onclick="iGuessed()">
+        🎉 Я угадал персонажа!
+      </button>
+
+      <div class="notes-area">
+        <label>Мои заметки</label>
+        <textarea id="my-notes" placeholder="Записывайте подсказки, вопросы, версии..."></textarea>
+      </div>
+    </div>
+
+    <button class="btn btn-secondary" onclick="leaveRoom()">Выйти из игры</button>
+    <div id="host-end-controls" style="display:none; margin-top:10px;">
+      <button class="btn btn-danger" onclick="endGame()">Завершить игру</button>
+    </div>
+  </div>
+
+  <!-- ======== ЭКРАН: ФИНАЛ ======== -->
+  <div class="screen" id="screen-final">
+    <div class="card text-center" style="padding:24px">
+      <div style="font-size:48px; margin-bottom:8px;">🏆</div>
+      <div class="card-title">Игра завершена</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">✦ Результаты</div>
+      <div class="podium" id="final-podium"></div>
+    </div>
+
+    <button class="btn btn-primary" onclick="backToMenu()">Новая игра ✦</button>
+  </div>
+
+  <!-- ======== ЭКРАН: ЗАГРУЗКА ======== -->
+  <div class="screen" id="screen-loading">
+    <div class="loading">
+      <span class="loading-icon">⚡</span>
+      <div class="loading-text" id="loading-text">Магия в процессе...</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+//  КОНФИГУРАЦИЯ (сохраняется в localStorage)
+// ============================================================
+const LS = {
+  get: k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+  set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
+};
+
+let db = null;
+let currentRoom = null;
+let myPlayerId = null;
+let myName = '';
+let isHost = false;
+let imagesBaseUrl = '';
+let totalChars = 120;
+let gameRef = null;
+let listeners = [];
+
+// ============================================================
+//  ЗВЁЗДЫ
+// ============================================================
+function createStars() {
+  const container = document.getElementById('stars');
+  for (let i = 0; i < 60; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2 + 0.5;
+    s.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%;
+      top:${Math.random()*100}%;
+      --dur:${Math.random()*4+2}s;
+      --delay:${Math.random()*4}s;
+      --max-op:${Math.random()*0.5+0.2};
+    `;
+    container.appendChild(s);
+  }
+}
+createStars();
+
+// ============================================================
+//  УТИЛИТЫ
+// ============================================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+}
+
+function toast(msg, dur = 2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+function showHowTo() {
+  const b = document.getElementById('howto-block');
+  b.style.display = b.style.display === 'none' ? 'block' : 'none';
+}
+
+function showImgHelp() {
+  const b = document.getElementById('img-help');
+  b.style.display = b.style.display === 'none' ? 'block' : 'none';
+}
+
+function genId(len = 8) {
+  return Math.random().toString(36).substr(2, len).toUpperCase();
+}
+
+function genRoomCode() {
+  return Math.random().toString(36).substr(2, 4).toUpperCase();
+}
+
+function padNum(n) {
+  return String(n).padStart(3, '0');
+}
+
+function getImageUrl(cardIndex) {
+  if (!imagesBaseUrl) return null;
+  const base = imagesBaseUrl.replace(/\/$/, '');
+  return `${base}/${padNum(cardIndex)}.png`;
+}
+
+function randomCardIndex() {
+  return Math.floor(Math.random() * totalChars) + 1;
+}
+
+function confetti() {
+  const emojis = ['⚡','⭐','🌟','✨','🔮','🪄'];
+  for (let i = 0; i < 8; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-star';
+    el.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+    el.style.cssText = `left:${Math.random()*100}vw; top:-20px; animation-delay:${Math.random()*0.5}s;`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2000);
+  }
+}
+
+function removeListeners() {
+  listeners.forEach(([ref, cb]) => ref.off('value', cb));
+  listeners = [];
+}
+
+// ============================================================
+//  FIREBASE INIT
+// ============================================================
+function initFirebase() {
+  const apiKey = document.getElementById('fb-apiKey').value.trim();
+  const databaseURL = document.getElementById('fb-dbUrl').value.trim();
+  const projectId = document.getElementById('fb-projectId').value.trim();
+  const appId = document.getElementById('fb-appId').value.trim();
+
+  const errEl = document.getElementById('config-error');
+  errEl.style.display = 'none';
+
+  if (!apiKey || !databaseURL || !projectId || !appId) {
+    errEl.textContent = 'Заполните все поля конфигурации';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  try {
+    // Удаляем старое приложение если есть
+    if (firebase.apps.length) {
+      firebase.apps.forEach(app => app.delete());
+    }
+  } catch(e) {}
+
+  try {
+    firebase.initializeApp({ apiKey, databaseURL, projectId, appId });
+    db = firebase.database();
+
+    // Тест соединения
+    showScreen('loading');
+    document.getElementById('loading-text').textContent = 'Подключение к Хогвартсу...';
+
+    db.ref('.info/connected').once('value').then(snap => {
+      // Сохраняем конфиг
+      LS.set('fb_config', { apiKey, databaseURL, projectId, appId });
+      myPlayerId = LS.get('playerId') || genId();
+      LS.set('playerId', myPlayerId);
+
+      // Восстанавливаем поля меню
+      const saved = LS.get('game_prefs') || {};
+      if (saved.name) document.getElementById('player-name').value = saved.name;
+      if (saved.url) document.getElementById('images-url').value = saved.url;
+      if (saved.count) document.getElementById('char-count').value = saved.count;
+
+      showScreen('menu');
+    }).catch(err => {
+      showScreen('config');
+      document.getElementById('config-error').textContent = 'Ошибка подключения: ' + err.message;
+      document.getElementById('config-error').style.display = 'block';
+    });
+  } catch(err) {
+    showScreen('config');
+    document.getElementById('config-error').textContent = 'Ошибка: ' + err.message;
+    document.getElementById('config-error').style.display = 'block';
+  }
+}
+
+// Автовосстановление конфига
+window.addEventListener('load', () => {
+  const saved = LS.get('fb_config');
+  if (saved) {
+    document.getElementById('fb-apiKey').value = saved.apiKey || '';
+    document.getElementById('fb-dbUrl').value = saved.databaseURL || '';
+    document.getElementById('fb-projectId').value = saved.projectId || '';
+    document.getElementById('fb-appId').value = saved.appId || '';
+  }
+});
+
+// ============================================================
+//  СОЗДАНИЕ КОМНАТЫ
+// ============================================================
+async function createRoom() {
+  myName = document.getElementById('player-name').value.trim();
+  imagesBaseUrl = document.getElementById('images-url').value.trim();
+  totalChars = parseInt(document.getElementById('char-count').value) || 120;
+
+  if (!myName) { toast('Введите ваше имя'); return; }
+
+  LS.set('game_prefs', { name: myName, url: imagesBaseUrl, count: totalChars });
+
+  const code = genRoomCode();
+  isHost = true;
+  currentRoom = code;
+
+  const cardIndex = randomCardIndex();
+
+  const roomData = {
+    code,
+    host: myPlayerId,
+    status: 'lobby',
+    imagesBaseUrl,
+    totalChars,
+    players: {
+      [myPlayerId]: {
+        name: myName,
+        score: 0,
+        cardIndex,
+        joinedAt: Date.now(),
+      }
+    }
+  };
+
+  showScreen('loading');
+  document.getElementById('loading-text').textContent = 'Создаём комнату...';
+
+  await db.ref('rooms/' + code).set(roomData);
+  enterLobby(code);
+}
+
+// ============================================================
+//  ВХОД В КОМНАТУ
+// ============================================================
+async function joinRoom() {
+  myName = document.getElementById('player-name').value.trim();
+  imagesBaseUrl = document.getElementById('images-url').value.trim();
+  const code = document.getElementById('join-code').value.trim().toUpperCase();
+
+  if (!myName) { toast('Введите ваше имя'); return; }
+  if (!code || code.length !== 4) { toast('Введите код комнаты (4 символа)'); return; }
+
+  showScreen('loading');
+  document.getElementById('loading-text').textContent = 'Ищем комнату...';
+
+  const snap = await db.ref('rooms/' + code).once('value');
+  if (!snap.exists()) {
+    toast('Комната не найдена');
+    showScreen('menu');
+    return;
+  }
+
+  const room = snap.val();
+  if (room.status === 'finished') {
+    toast('Эта игра уже завершена');
+    showScreen('menu');
+    return;
+  }
+
+  // Подхватываем настройки из комнаты
+  imagesBaseUrl = room.imagesBaseUrl || imagesBaseUrl;
+  totalChars = room.totalChars || 120;
+
+  isHost = false;
+  currentRoom = code;
+
+  const cardIndex = randomCardIndex();
+  await db.ref(`rooms/${code}/players/${myPlayerId}`).set({
+    name: myName,
+    score: 0,
+    cardIndex,
+    joinedAt: Date.now(),
+  });
+
+  LS.set('game_prefs', { name: myName, url: imagesBaseUrl, count: totalChars });
+  if (room.status === 'playing') {
+    enterGame(code);
+  } else {
+    enterLobby(code);
+  }
+}
+
+// ============================================================
+//  ЛОББИ
+// ============================================================
+function enterLobby(code) {
+  currentRoom = code;
+  document.getElementById('lobby-code').textContent = code;
+  document.getElementById('host-controls').style.display = isHost ? 'block' : 'none';
+  showScreen('lobby');
+
+  const ref = db.ref('rooms/' + code);
+  const cb = snap => {
+    if (!snap.exists()) { leaveRoom(); return; }
+    const room = snap.val();
+
+    if (room.status === 'playing') {
+      removeListeners();
+      enterGame(code);
+      return;
+    }
+    if (room.status === 'finished') {
+      removeListeners();
+      showFinal(room);
+      return;
+    }
+
+    const players = room.players || {};
+    const pList = Object.entries(players).sort((a,b) => a[1].joinedAt - b[1].joinedAt);
+
+    const ul = document.getElementById('lobby-players');
+    ul.innerHTML = '';
+    pList.forEach(([pid, p]) => {
+      const li = document.createElement('li');
+      li.className = 'player-item';
+      const isMe = pid === myPlayerId;
+      li.innerHTML = `
+        <div class="player-avatar">${p.name.charAt(0).toUpperCase()}</div>
+        <div class="player-name-text">${p.name}${isMe ? ' <em style="color:rgba(245,234,214,0.4);font-size:12px;">(вы)</em>' : ''}</div>
+        ${pid === room.host ? '<div class="player-host-badge">Хозяин</div>' : ''}
+      `;
+      ul.appendChild(li);
+    });
+
+    document.getElementById('player-count-lobby').textContent = `(${pList.length})`;
+
+    const startBtn = document.getElementById('start-btn');
+    if (startBtn) {
+      startBtn.disabled = pList.length < 2;
+    }
+  };
+
+  ref.on('value', cb);
+  listeners.push([ref, cb]);
+}
+
+// ============================================================
+//  СТАРТ ИГРЫ (только хост)
+// ============================================================
+async function startGame() {
+  if (!isHost || !currentRoom) return;
+  await db.ref('rooms/' + currentRoom + '/status').set('playing');
+}
+
+// ============================================================
+//  ИГРОВОЙ ЭКРАН
+// ============================================================
+function enterGame(code) {
+  currentRoom = code;
+  showScreen('game');
+  document.getElementById('host-end-controls').style.display = isHost ? 'block' : 'none';
+
+  const ref = db.ref('rooms/' + code);
+  const cb = snap => {
+    if (!snap.exists()) { leaveRoom(); return; }
+    const room = snap.val();
+
+    if (room.status === 'finished') {
+      removeListeners();
+      showFinal(room);
+      return;
+    }
+
+    const players = room.players || {};
+    renderGame(players, room);
+  };
+
+  ref.on('value', cb);
+  listeners.push([ref, cb]);
+}
+
+let lastRender = {};
+
+function renderGame(players, room) {
+  const grid = document.getElementById('other-players-grid');
+  const myData = players[myPlayerId] || {};
+
+  // Мой счёт
+  document.getElementById('my-score').textContent = myData.score || 0;
+
+  // Карточки других игроков
+  const others = Object.entries(players).filter(([pid]) => pid !== myPlayerId);
+
+  grid.innerHTML = '';
+  others.forEach(([pid, p]) => {
+    const imgUrl = (room.imagesBaseUrl || imagesBaseUrl)
+      ? `${(room.imagesBaseUrl || imagesBaseUrl).replace(/\/$/, '')}/${padNum(p.cardIndex)}.png`
+      : null;
+
+    const prev = lastRender[pid];
+    const changed = prev && prev.cardIndex !== p.cardIndex;
+
+    const card = document.createElement('div');
+    card.className = 'other-player-card' + (p.guessed ? ' guessed' : '');
+    if (changed) card.classList.add('flash-new');
+
+    card.innerHTML = `
+      <div class="opc-header">
+        <span class="opc-name">${p.name}</span>
+        <span class="opc-score">★${p.score || 0}</span>
+      </div>
+      <div class="opc-img-wrap">
+        ${imgUrl
+          ? `<img src="${imgUrl}" alt="${p.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+          : ''
+        }
+        <div class="opc-img-placeholder" style="${imgUrl ? 'display:none' : 'display:flex'}">🧙</div>
+      </div>
+      <div class="opc-character">#${padNum(p.cardIndex)}</div>
+      ${p.guessed ? '<div class="guessed-overlay">✅</div>' : ''}
+    `;
+    grid.appendChild(card);
+    lastRender[pid] = p;
+  });
+
+  if (others.length === 0) {
+    grid.innerHTML = '<div style="grid-column:span 2; text-align:center; padding:20px; color:rgba(245,234,214,0.3); font-style:italic;">Ждём других игроков...</div>';
+  }
+}
+
+// ============================================================
+//  УГАДАЛ ПЕРСОНАЖА
+// ============================================================
+async function iGuessed() {
+  if (!currentRoom || !myPlayerId) return;
+
+  const snap = await db.ref(`rooms/${currentRoom}/players/${myPlayerId}`).once('value');
+  const me = snap.val() || {};
+  const newCard = randomCardIndex();
+  const newScore = (me.score || 0) + 1;
+
+  await db.ref(`rooms/${currentRoom}/players/${myPlayerId}`).update({
+    score: newScore,
+    cardIndex: newCard,
+    guessed: false,
+  });
+
+  confetti();
+  toast('🎉 +1 очко! Новая карточка!');
+}
+
+// ============================================================
+//  ЗАВЕРШЕНИЕ ИГРЫ
+// ============================================================
+async function endGame() {
+  if (!isHost || !currentRoom) return;
+  await db.ref('rooms/' + currentRoom + '/status').set('finished');
+}
+
+function showFinal(room) {
+  showScreen('final');
+  const players = room.players || {};
+  const sorted = Object.entries(players).sort((a, b) => (b[1].score || 0) - (a[1].score || 0));
+
+  const podium = document.getElementById('final-podium');
+  podium.innerHTML = '';
+
+  sorted.forEach(([pid, p], i) => {
+    const rank = i + 1;
+    const rankClass = rank <= 3 ? `rank-${rank}` : 'rank-other';
+    const rankText = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank;
+
+    const item = document.createElement('div');
+    item.className = 'podium-item';
+    item.innerHTML = `
+      <div class="podium-rank ${rankClass}">${rankText}</div>
+      <div class="podium-info">
+        <div class="podium-player">${p.name}${pid === myPlayerId ? ' <em style="color:rgba(245,234,214,0.4);font-size:12px;">(вы)</em>' : ''}</div>
+      </div>
+      <div class="podium-pts">${p.score || 0}</div>
+    `;
+    podium.appendChild(item);
+  });
+}
+
+// ============================================================
+//  ВЫХОД / СБРОС
+// ============================================================
+async function leaveRoom() {
+  removeListeners();
+  if (currentRoom && myPlayerId) {
+    await db.ref(`rooms/${currentRoom}/players/${myPlayerId}`).remove();
+    // Если хост ушёл и игра в лобби — удаляем комнату
+    if (isHost) {
+      const snap = await db.ref(`rooms/${currentRoom}/status`).once('value');
+      if (snap.val() === 'lobby') {
+        await db.ref('rooms/' + currentRoom).remove();
+      }
+    }
+  }
+  currentRoom = null;
+  isHost = false;
+  lastRender = {};
+  showScreen('menu');
+}
+
+function backToMenu() {
+  removeListeners();
+  currentRoom = null;
+  isHost = false;
+  lastRender = {};
+  showScreen('menu');
+}
+</script>
+</body>
+</html>
